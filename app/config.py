@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     app_name: str = "Home Dash"
     refresh_interval_seconds: int = Field(
-        5, description="Default refresh interval for metric polling on the frontend."
+        60, description="Default refresh interval for metric polling on the frontend."
     )
     sample_interval_seconds: int = Field(
         5, description="How frequently to snapshot metrics into the database."

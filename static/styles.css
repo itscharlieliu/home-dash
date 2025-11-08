@@ -72,6 +72,12 @@ body {
   font-size: 0.95rem;
 }
 
+.metric-chart-container {
+  position: relative;
+  width: 100%;
+  height: 220px;
+}
+
 .metric-output {
   font-family: ui-monospace, SFMono-Regular, SFMono, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
@@ -87,7 +93,7 @@ body {
 
 .metric-chart {
   width: 100%;
-  height: 220px;
+  height: 100%;
 }
 
 .metric-table {
@@ -116,9 +122,9 @@ body {
   background: rgba(148, 163, 184, 0.08);
 }
 
-.hidden {
+/* .hidden {
   display: none !important;
-}
+} */
 
 @media (max-width: 600px) {
   body {

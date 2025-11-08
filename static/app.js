@@ -60,8 +60,12 @@ function setupRegistry(config) {
       card,
       output,
       chartCanvas,
+      chartContainer: chartCanvas ? chartCanvas.parentElement : null,
       chart: null,
       table: null,
+      tableHead: null,
+      tableBody: null,
+      tableCaption: null,
     };
 
     if (config.type === "timeseries" && chartAvailable) {
@@ -91,6 +95,10 @@ function setupRegistry(config) {
 
 function activateChart(card, canvas, output) {
   if (!canvas) return;
+  const container = canvas.parentElement;
+  if (container) {
+    container.classList.remove("hidden");
+  }
   canvas.classList.remove("hidden");
   canvas.setAttribute("aria-hidden", "false");
   if (output) {
@@ -99,6 +107,9 @@ function activateChart(card, canvas, output) {
 }
 
 function deactivateChart(canvas, output) {
+  if (canvas?.parentElement) {
+    canvas.parentElement.classList.add("hidden");
+  }
   if (canvas) {
     canvas.classList.add("hidden");
     canvas.setAttribute("aria-hidden", "true");
@@ -195,28 +206,51 @@ function updateMetric(item) {
 }
 
 function updateJson(entry, data, timestamp) {
+  if (entry.chartCanvas) {
+    deactivateChart(entry.chartCanvas, entry.output);
+  }
   if (!entry.output) return;
   entry.output.classList.remove("hidden");
   entry.output.textContent = formatMetric(data, timestamp);
 }
 
 function updateTable(entry, data, timestamp) {
+  if (entry.chartCanvas) {
+    deactivateChart(entry.chartCanvas, entry.output);
+  }
   const rows = Array.isArray(data?.partitions) ? data.partitions : [];
   const columns = entry.config.options?.columns ?? Object.keys(rows[0] ?? {});
 
   if (!entry.table) {
     entry.table = document.createElement("table");
     entry.table.className = "metric-table";
+    entry.tableCaption = document.createElement("caption");
+    entry.tableCaption.classList.add("hidden");
+    entry.tableHead = document.createElement("thead");
+    entry.tableBody = document.createElement("tbody");
+    entry.table.append(entry.tableCaption, entry.tableHead, entry.tableBody);
     const body = entry.card.querySelector(".metric-body");
     if (entry.output) {
       entry.output.classList.add("hidden");
     }
     body.appendChild(entry.table);
+  } else if (!entry.tableHead || !entry.tableBody || !entry.tableCaption) {
+    entry.tableCaption = entry.tableCaption ?? document.createElement("caption");
+    entry.tableCaption.classList.add("hidden");
+    entry.tableHead = entry.tableHead ?? document.createElement("thead");
+    entry.tableBody = entry.tableBody ?? document.createElement("tbody");
+    entry.table.replaceChildren(entry.tableCaption, entry.tableHead, entry.tableBody);
   }
 
-  entry.table.innerHTML = "";
+  entry.tableHead.replaceChildren();
+  entry.tableBody.replaceChildren();
 
   if (!rows.length) {
+    entry.table.classList.add("hidden");
+    if (entry.tableCaption) {
+      entry.tableCaption.textContent = "";
+      entry.tableCaption.classList.add("hidden");
+    }
     if (entry.output) {
       entry.output.classList.remove("hidden");
       entry.output.textContent = timestamp
@@ -226,23 +260,29 @@ function updateTable(entry, data, timestamp) {
     return;
   }
 
-  if (timestamp) {
-    const caption = document.createElement("caption");
-    caption.textContent = `Last updated ${formatTimestamp(timestamp)}`;
-    entry.table.appendChild(caption);
+  entry.table.classList.remove("hidden");
+  if (entry.output) {
+    entry.output.classList.add("hidden");
   }
 
-  const thead = document.createElement("thead");
+  if (entry.tableCaption) {
+    if (timestamp) {
+      entry.tableCaption.textContent = `Last updated ${formatTimestamp(timestamp)}`;
+      entry.tableCaption.classList.remove("hidden");
+    } else {
+      entry.tableCaption.textContent = "";
+      entry.tableCaption.classList.add("hidden");
+    }
+  }
+
   const headerRow = document.createElement("tr");
   columns.forEach((column) => {
     const th = document.createElement("th");
     th.textContent = column;
     headerRow.appendChild(th);
   });
-  thead.appendChild(headerRow);
-  entry.table.appendChild(thead);
+  entry.tableHead.appendChild(headerRow);
 
-  const tbody = document.createElement("tbody");
   rows.forEach((row) => {
     const tr = document.createElement("tr");
     columns.forEach((column) => {
@@ -250,9 +290,8 @@ function updateTable(entry, data, timestamp) {
       td.textContent = formatCell(row[column]);
       tr.appendChild(td);
     });
-    tbody.appendChild(tr);
+    entry.tableBody.appendChild(tr);
   });
-  entry.table.appendChild(tbody);
 }
 
 function updateChart(entry, history) {
