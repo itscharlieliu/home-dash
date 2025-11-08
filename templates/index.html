@@ -31,7 +31,9 @@
     <main>
       <section class="metrics-grid">
         {% for metric in metrics %}
-        <article class="metric-card" data-metric-id="{{ metric.id }}" data-display-type="{{ metric.display.type }}"
+        {% set column_span = metric.display.get('column_span') if metric.display else None %}
+        <article class="metric-card" {% if column_span %}style="grid-column: span {{ column_span }};" {% endif %}
+          data-metric-id="{{ metric.id }}" data-display-type="{{ metric.display.type }}"
           data-display-config='{{ metric.display | tojson }}'>
           <header>
             <h2>{{ metric.name }}</h2>

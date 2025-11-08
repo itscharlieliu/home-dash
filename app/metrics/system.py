@@ -26,14 +26,20 @@ class CPUMetric(MetricProvider):
 
     def collect(self) -> Dict[str, Any]:
         per_core = psutil.cpu_percent(interval=0.1, percpu=True)
-        total = sum(per_core) / len(per_core) if per_core else psutil.cpu_percent(interval=None)
+        total = (
+            sum(per_core) / len(per_core)
+            if per_core
+            else psutil.cpu_percent(interval=None)
+        )
         return {
             "timestamp": time.time(),
             "logical_cores": psutil.cpu_count(),
             "physical_cores": psutil.cpu_count(logical=False),
             "percent_total": _percent(total),
             "percent_per_core": [_percent(value) for value in per_core],
-            "load_average": list(psutil.getloadavg()) if hasattr(psutil, "getloadavg") else None,
+            "load_average": (
+                list(psutil.getloadavg()) if hasattr(psutil, "getloadavg") else None
+            ),
         }
 
 
@@ -79,7 +85,10 @@ class DiskMetric(MetricProvider):
         category="system",
         display=MetricDisplayConfig(
             type="table",
-            options={"columns": ["device", "mountpoint", "percent", "used", "free", "total"]},
+            options={
+                "columns": ["device", "mountpoint", "percent", "used", "free", "total"]
+            },
+            column_span=2,
         ),
     )
 
@@ -169,4 +178,3 @@ DEFAULT_PROVIDERS = [
     DiskMetric(),
     NetworkMetric(),
 ]
-

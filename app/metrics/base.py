@@ -11,6 +11,7 @@ class MetricDisplayConfig:
     series: Optional[Mapping[str, str]] = None  # chart label -> dotted path in data
     unit: Optional[str] = None
     options: Optional[Dict[str, Any]] = None
+    column_span: Optional[int] = None
 
 
 @dataclass(frozen=True)
