@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -30,6 +30,14 @@ collector = MetricCollector(
 )
 
 
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<rect width="64" height="64" rx="12" fill="#111827"/>
+<rect x="14" y="14" width="36" height="36" rx="8" fill="#1f2937"/>
+<path d="M24 24h16v4H24zm0 8h16v4H24zm0 8h10v4H24z" fill="#38bdf8"/>
+</svg>
+"""
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
@@ -52,6 +60,11 @@ def get_registry() -> MetricRegistry:
 @app.get("/", include_in_schema=False)
 async def root_redirect() -> RedirectResponse:
     return RedirectResponse("/dashboard")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> Response:
+    return Response(content=FAVICON_SVG, media_type="image/svg+xml")
 
 
 @app.get("/dashboard")
@@ -156,4 +169,3 @@ async def read_metric_history(
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
