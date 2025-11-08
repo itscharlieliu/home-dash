@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"
+      integrity="sha384-Hf3PVvVQj2r0XNgod+1Z45a2VJAHzlVhdrGH4FGbtWoHVaMYZ6/YEUfY/49T4/WS" crossorigin="anonymous"
+      defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"
+      integrity="sha384-2ezx5f9oYoVjjGN1a1PPHrnfoYKXbKAzCZJwIVf7zMmdpFQ7lGWSS1Y1VrV2tA5J" crossorigin="anonymous"
+      defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>{{ app_name }}</h1>
+      <div class="header-meta">
+        <span class="badge">Refresh: {{ refresh_interval }}s</span>
+        <a href="{{ url_for('read_metrics') }}" class="badge badge-link">API</a>
+        <a
+          href="https://github.com/charlie/home-dash"
+          target="_blank"
+          rel="noopener"
+          class="badge badge-link"
+        >
+          Source
+        </a>
+      </div>
+    </header>
+    <main>
+      <section class="metrics-grid">
+        {% for metric in metrics %}
+        <article class="metric-card" data-metric-id="{{ metric.id }}" data-display-type="{{ metric.display.type }}"
+          data-display-config='{{ metric.display | tojson }}'>
+          <header>
+            <h2>{{ metric.name }}</h2>
+            <p>{{ metric.description }}</p>
+          </header>
+          <div class="metric-body">
+            <canvas class="metric-chart hidden" aria-hidden="true"></canvas>
+            <pre class="metric-output">Loading...</pre>
+          </div>
+        </article>
+        {% endfor %}
+      </section>
+    </main>
+    <script>
+      window.HOME_DASH = {
+        refreshInterval: {{ refresh_interval }},
+            metrics: { { metrics | tojson } },
+            historyLimit: { { history_limit } },
+      };
+    </script>
+    <script src="{{ url_for('static', path='app.js') }}"></script>
+  </body>
+</html>
+
