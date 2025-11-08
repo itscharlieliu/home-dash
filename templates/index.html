@@ -45,12 +45,12 @@
         {% endfor %}
       </section>
     </main>
-    <script>
-      window.HOME_DASH = {
-        refreshInterval: {{ refresh_interval }},
-            metrics: { { metrics | tojson } },
-            historyLimit: { { history_limit } },
-      };
+    <script id="home-dash-config" type="application/json">
+              {{ {
+                "refreshInterval": refresh_interval,
+                "historyLimit": history_limit,
+                "metrics": metrics
+              } | tojson }}
     </script>
     <script src="{{ url_for('static', path='app.js') }}"></script>
   </body>

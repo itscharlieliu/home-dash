@@ -9,16 +9,43 @@ const palette = [
   "#818cf8",
 ];
 
+let homeDashConfig = null;
+let refreshIntervalSeconds = 5;
+
 document.addEventListener("DOMContentLoaded", () => {
-  setupRegistry();
-  const interval = Math.max(window.HOME_DASH?.refreshInterval ?? 5, 1);
+  const config = loadConfig();
+  refreshIntervalSeconds = Math.max(Number(config.refreshInterval ?? 5) || 5, 1);
+  setupRegistry(config);
   refreshMetrics();
-  setInterval(refreshMetrics, interval * 1000);
+  setInterval(refreshMetrics, refreshIntervalSeconds * 1000);
 });
 
-function setupRegistry() {
-  console.log("setupRegistry", window.HOME_DASH);
-  const metricDefinitions = window.HOME_DASH?.metrics ?? [];
+function loadConfig() {
+  if (homeDashConfig) {
+    return homeDashConfig;
+  }
+  if (window.HOME_DASH && typeof window.HOME_DASH === "object" && !Array.isArray(window.HOME_DASH)) {
+    homeDashConfig = window.HOME_DASH;
+    return homeDashConfig;
+  }
+  const element = document.getElementById("home-dash-config");
+  if (!element) {
+    console.warn("Home Dash config script tag not found.");
+    homeDashConfig = {};
+    return homeDashConfig;
+  }
+  try {
+    homeDashConfig = JSON.parse(element.textContent || "{}");
+  } catch (error) {
+    console.error("Failed to parse Home Dash config JSON.", error);
+    homeDashConfig = {};
+  }
+  window.HOME_DASH = homeDashConfig;
+  return homeDashConfig;
+}
+
+function setupRegistry(config) {
+  const metricDefinitions = Array.isArray(config.metrics) ? config.metrics : [];
   const chartAvailable = typeof window.Chart === "function";
 
   metricDefinitions.forEach((definition) => {
@@ -150,8 +177,6 @@ function updateMetric(item) {
   const displayType = entry.config.type;
   const latestData = item.latest?.data ?? null;
   const timestamp = item.latest?.timestamp ?? null;
-
-  console.log("updateMetric", item.definition.id, displayType, latestData, timestamp);
 
   if (displayType === "timeseries") {
     if (!entry.chart) {
