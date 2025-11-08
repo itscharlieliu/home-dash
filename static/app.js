@@ -9,8 +9,6 @@ const palette = [
   "#818cf8",
 ];
 
-let homeDashConfig = null;
-let refreshIntervalSeconds = 5;
 
 document.addEventListener("DOMContentLoaded", () => {
   const config = loadConfig();
@@ -21,27 +19,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function loadConfig() {
-  if (homeDashConfig) {
-    return homeDashConfig;
-  }
   if (window.HOME_DASH && typeof window.HOME_DASH === "object" && !Array.isArray(window.HOME_DASH)) {
-    homeDashConfig = window.HOME_DASH;
-    return homeDashConfig;
+    return window.HOME_DASH;
   }
   const element = document.getElementById("home-dash-config");
   if (!element) {
     console.warn("Home Dash config script tag not found.");
-    homeDashConfig = {};
-    return homeDashConfig;
+    return {};
   }
   try {
-    homeDashConfig = JSON.parse(element.textContent || "{}");
+    window.HOME_DASH = JSON.parse(element.textContent || "{}");
+    return window.HOME_DASH;
   } catch (error) {
     console.error("Failed to parse Home Dash config JSON.", error);
-    homeDashConfig = {};
   }
-  window.HOME_DASH = homeDashConfig;
-  return homeDashConfig;
 }
 
 function setupRegistry(config) {

@@ -8,7 +8,6 @@
 body {
   margin: 0;
   padding: 0 2rem 4rem;
-  min-height: 100vh;
 }
 
 .app-header {
@@ -122,9 +121,9 @@ body {
   background: rgba(148, 163, 184, 0.08);
 }
 
-/* .hidden {
+.hidden {
   display: none !important;
-} */
+}
 
 @media (max-width: 600px) {
   body {
