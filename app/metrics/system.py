@@ -7,10 +7,6 @@ import psutil
 from .base import MetricDefinition, MetricDisplayConfig, MetricProvider
 
 
-def _percent(value: float) -> float:
-    return f"{round(value, 2)}%"
-
-
 def _format_bytes(value: int) -> str:
     units = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]
     if value is None:
@@ -35,7 +31,7 @@ class CPUMetric(MetricProvider):
         display=MetricDisplayConfig(
             type="timeseries",
             series={"Total %": "percent_total"},
-            unit="percent",
+            unit="%",
         ),
     )
 
@@ -50,8 +46,8 @@ class CPUMetric(MetricProvider):
             "timestamp": time.time(),
             "logical_cores": psutil.cpu_count(),
             "physical_cores": psutil.cpu_count(logical=False),
-            "percent_total": _percent(total),
-            "percent_per_core": [_percent(value) for value in per_core],
+            "percent_total": total,
+            "percent_per_core": [value for value in per_core],
             "load_average": (
                 list(psutil.getloadavg()) if hasattr(psutil, "getloadavg") else None
             ),
@@ -80,13 +76,13 @@ class MemoryMetric(MetricProvider):
                 "total": virt.total,
                 "available": virt.available,
                 "used": virt.used,
-                "percent": _percent(virt.percent),
+                "percent": virt.percent,
                 "free": virt.free,
             },
             "swap": {
                 "total": swap.total,
                 "used": swap.used,
-                "percent": _percent(swap.percent),
+                "percent": swap.percent,
                 "free": swap.free,
             },
         }
@@ -123,7 +119,7 @@ class DiskMetric(MetricProvider):
                     "total": _format_bytes(usage.total),
                     "used": _format_bytes(usage.used),
                     "free": _format_bytes(usage.free),
-                    "percent": _percent(usage.percent),
+                    "percent": usage.percent,
                 }
             )
 
