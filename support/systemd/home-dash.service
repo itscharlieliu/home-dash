@@ -1,0 +1,17 @@
+[Unit]
+Description=Home Dash metrics dashboard
+After=default.target
+
+[Service]
+Type=forking
+WorkingDirectory=%h/Documents/projects/home-dash
+ExecStart=/bin/bash -lc %h/Documents/projects/home-dash/start.sh
+ExecStop=/bin/bash -lc %h/Documents/projects/home-dash/stop.sh
+PIDFile=%h/Documents/projects/home-dash/.uvicorn.pid
+Restart=on-failure
+Environment=HOST=0.0.0.0
+Environment=PORT=8000
+
+[Install]
+WantedBy=default.target
+

@@ -14,14 +14,38 @@ Lightweight FastAPI dashboard that exposes system metrics via a web UI and JSON 
 
 ### Run locally
 
+#### Start the server
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+./start.sh
 ```
 
-Then visit `http://localhost:8000/dashboard`.
+The script provisions the virtual environment and runs Uvicorn in the background. Logs are written to `logs/uvicorn.log`, and the active process ID is stored in `.uvicorn.pid`.
+
+#### Stop the server
+
+```bash
+./stop.sh
+```
+
+This terminates the background Uvicorn process and removes the PID file. If the PID file is missing or stale, the script handles cleanup for you.
+
+Once the server is running, visit `http://localhost:8000/dashboard`.
+
+### Start automatically on Linux (systemd user service)
+
+1. Confirm that the path in `support/systemd/home-dash.service` matches the location of your checkout. Update the `WorkingDirectory`, `ExecStart`, `ExecStop`, and `PIDFile` entries if your project lives somewhere other than `~/Documents/projects/home-dash`.
+2. Copy the service file into your user systemd directory:
+   ```bash
+   mkdir -p ~/.config/systemd/user
+   cp support/systemd/home-dash.service ~/.config/systemd/user/
+   ```
+3. Reload and enable the service:
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user enable --now home-dash.service
+   ```
+4. The dashboard now starts automatically when you log in. Stop it with `systemctl --user stop home-dash.service`, disable permanent autostart with `systemctl --user disable home-dash.service`, and view logs via `journalctl --user -u home-dash.service`.
 
 ## Extending Metrics
 
