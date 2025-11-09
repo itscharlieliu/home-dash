@@ -286,19 +286,34 @@ function updateTable(entry, data, timestamp) {
 }
 
 function updateChart(entry, history) {
+
   if (!entry.chart) return;
   const display = entry.definition.display ?? {};
   const series = display.series ?? { Value: null };
 
   const entries = Object.entries(series);
+  const historySamples = Array.isArray(history) ? history : [];
   entry.chart.data.datasets = entries.map(([label, path], index) => {
     const color = palette[index % palette.length];
-    const dataPoints = history
-      .map((sample) => ({
-        x: new Date(sample.timestamp),
-        y: getByPath(sample.data, path),
-      }))
-      .filter((point) => typeof point.y === "number");
+    const dataPoints = historySamples
+      .map((sample) => {
+        const epoch = Date.parse(sample.timestamp);
+        const rawValue = getByPath(sample.data, path);
+        const value =
+          typeof rawValue === "number"
+            ? rawValue
+            : rawValue != null
+            ? Number(rawValue)
+            : undefined;
+        if (!Number.isFinite(epoch) || !Number.isFinite(value)) {
+          return null;
+        }
+        return {
+          x: epoch,
+          y: value,
+        };
+      })
+      .filter((point) => point !== null);
 
     return {
       label,
@@ -312,6 +327,7 @@ function updateChart(entry, history) {
       fill: true,
     };
   });
+
   entry.chart.update("none");
 }
 
