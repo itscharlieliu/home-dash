@@ -9,7 +9,6 @@ Lightweight FastAPI dashboard that exposes system metrics via a web UI and JSON 
 - Responsive dashboard UI with automatic refresh and per-metric display types (charts, tables, raw JSON)
 - Historical storage of metrics in SQLite for time-series charts and API access
 - JSON API for integrating the metrics with other tooling
-- Dockerized for consistent deployment on Linux hosts
 
 ## Getting Started
 
@@ -23,30 +22,6 @@ uvicorn app.main:app --reload
 ```
 
 Then visit `http://localhost:8000/dashboard`.
-
-### Run with Docker
-
-```bash
-docker build -t home-dash .
-docker run --rm -p 8000:8000 --name home-dash home-dash
-```
-
-Environment variables prefixed with `HOME_DASH_` override configuration. For example:
-
-```bash
-docker run --rm -p 8000:8000 \
-  -e HOME_DASH_REFRESH_INTERVAL_SECONDS=10 \
-  -e HOME_DASH_SAMPLE_INTERVAL_SECONDS=5 \
-  home-dash
-```
-
-Persist the local SQLite data by mounting `./data` to a host directory:
-
-```bash
-docker run --rm -p 8000:8000 \
-  -v $(pwd)/data:/app/data \
-  home-dash
-```
 
 ## Extending Metrics
 
