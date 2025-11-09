@@ -1,6 +1,6 @@
 # Home Dash
 
-Lightweight FastAPI dashboard that exposes system metrics via a web UI and JSON API. Built to run easily inside Docker and designed for extension with custom metric providers.
+Lightweight FastAPI dashboard that exposes system metrics via a web UI and JSON API. Designed for extension with custom metric providers.
 
 ## Features
 
@@ -92,7 +92,6 @@ The new metric automatically appears in the dashboard and the `/api/metrics` end
 - `app/models.py` – SQLAlchemy models for persisted samples
 - `templates/` – Jinja templates for the dashboard UI
 - `static/` – frontend assets (CSS/JS)
-- `Dockerfile` – container runtime definition
 
 ## Roadmap Ideas
 
