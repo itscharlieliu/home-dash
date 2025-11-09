@@ -170,6 +170,7 @@ class NetworkMetric(MetricProvider):
                     "dropout": stats.dropout,
                 }
             )
+
         return {
             "timestamp": time.time(),
             "hostname": platform.node(),

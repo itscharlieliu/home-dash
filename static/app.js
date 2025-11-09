@@ -202,7 +202,13 @@ function updateJson(entry, data, timestamp) {
   }
   if (!entry.output) return;
   entry.output.classList.remove("hidden");
-  entry.output.textContent = formatMetric(data, timestamp);
+  const formatted = formatMetric(data, timestamp);
+  entry.output.textContent = formatted.text;
+  if (formatted.title) {
+    entry.output.setAttribute("title", formatted.title);
+  } else {
+    entry.output.removeAttribute("title");
+  }
 }
 
 function updateTable(entry, data, timestamp) {
@@ -241,12 +247,18 @@ function updateTable(entry, data, timestamp) {
     if (entry.tableCaption) {
       entry.tableCaption.textContent = "";
       entry.tableCaption.classList.add("hidden");
+      entry.tableCaption.removeAttribute("title");
     }
     if (entry.output) {
       entry.output.classList.remove("hidden");
-      entry.output.textContent = timestamp
-        ? `No data (last update ${formatTimestamp(timestamp)})`
-        : "No data";
+      if (timestamp) {
+        const info = formatTimestampInfo(timestamp);
+        entry.output.textContent = `No data (last update ${info.local})`;
+        entry.output.setAttribute("title", `Last update (UTC): ${info.utc}`);
+      } else {
+        entry.output.textContent = "No data";
+        entry.output.removeAttribute("title");
+      }
     }
     return;
   }
@@ -254,15 +266,19 @@ function updateTable(entry, data, timestamp) {
   entry.table.classList.remove("hidden");
   if (entry.output) {
     entry.output.classList.add("hidden");
+    entry.output.removeAttribute("title");
   }
 
   if (entry.tableCaption) {
     if (timestamp) {
-      entry.tableCaption.textContent = `Last updated ${formatTimestamp(timestamp)}`;
+      const info = formatTimestampInfo(timestamp);
+      entry.tableCaption.textContent = `Last updated ${info.local}`;
       entry.tableCaption.classList.remove("hidden");
+      entry.tableCaption.setAttribute("title", `Last updated (UTC): ${info.utc}`);
     } else {
       entry.tableCaption.textContent = "";
       entry.tableCaption.classList.add("hidden");
+      entry.tableCaption.removeAttribute("title");
     }
   }
 
@@ -343,10 +359,15 @@ function updateMeta(entry, data, timestamp) {
     }
   });
   if (timestamp) {
-    summaryLines.push(`Updated: ${formatTimestamp(timestamp)}`);
+    const info = formatTimestampInfo(timestamp);
+    summaryLines.push(`Updated: ${info.local}`);
+    entry.output.setAttribute("title", `Updated (UTC): ${info.utc}`);
   }
   entry.output.classList.remove("hidden");
   entry.output.textContent = summaryLines.join("\n") || "No data";
+  if (!timestamp) {
+    entry.output.removeAttribute("title");
+  }
 }
 
 function formatMetric(data, timestamp) {
@@ -356,13 +377,34 @@ function formatMetric(data, timestamp) {
       : typeof data === "string" || typeof data === "number" || typeof data === "boolean"
       ? String(data)
       : JSON.stringify(data, (_, value) => value, 2);
-  if (!timestamp) return base;
-  return `${base}\n\nUpdated: ${formatTimestamp(timestamp)}`;
+  if (!timestamp) {
+    return { text: base, title: "" };
+  }
+  const info = formatTimestampInfo(timestamp);
+  return {
+    text: `${base}\n\nUpdated: ${info.local}`,
+    title: `Updated (UTC): ${info.utc}`,
+  };
 }
 
-function formatTimestamp(timestamp) {
+function formatTimestampInfo(timestamp) {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  if (!Number.isFinite(date.getTime())) {
+    return {
+      local: "Invalid time",
+      utc: String(timestamp ?? ""),
+    };
+  }
+
+  return {
+    local: date.toLocaleString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZoneName: "short",
+    }),
+    utc: date.toISOString(),
+  };
 }
 
 function getByPath(data, path) {
