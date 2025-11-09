@@ -155,7 +155,7 @@ async def read_metric(
 @app.get("/api/metrics/{metric_id}/history")
 async def read_metric_history(
     metric_id: str,
-    limit: int = Query(settings.history_points_limit, ge=1, le=1000),
+    limit: int = Query(settings.history_points_limit, ge=1),
     session: AsyncSession = Depends(get_session),
     registry: MetricRegistry = Depends(get_registry),
 ):

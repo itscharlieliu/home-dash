@@ -8,7 +8,22 @@ from .base import MetricDefinition, MetricDisplayConfig, MetricProvider
 
 
 def _percent(value: float) -> float:
-    return round(value, 2)
+    return f"{round(value, 2)}%"
+
+
+def _format_bytes(value: int) -> str:
+    units = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]
+    if value is None:
+        return "0 B"
+    negative = value < 0
+    size = float(abs(value))
+    for unit in units:
+        if size < 1024.0 or unit == units[-1]:
+            break
+        size /= 1024.0
+    formatted = f"{size:.2f}".rstrip("0").rstrip(".")
+    result = f"{formatted} {unit}"
+    return f"-{result}" if negative else result
 
 
 class CPUMetric(MetricProvider):
@@ -105,9 +120,9 @@ class DiskMetric(MetricProvider):
                     "device": partition.device,
                     "mountpoint": partition.mountpoint,
                     "fstype": partition.fstype,
-                    "total": usage.total,
-                    "used": usage.used,
-                    "free": usage.free,
+                    "total": _format_bytes(usage.total),
+                    "used": _format_bytes(usage.used),
+                    "free": _format_bytes(usage.free),
                     "percent": _percent(usage.percent),
                 }
             )

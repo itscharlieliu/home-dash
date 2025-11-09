@@ -278,7 +278,7 @@ function updateTable(entry, data, timestamp) {
     const tr = document.createElement("tr");
     columns.forEach((column) => {
       const td = document.createElement("td");
-      td.textContent = formatCell(row[column]);
+      td.textContent = row[column];
       tr.appendChild(td);
     });
     entry.tableBody.appendChild(tr);
@@ -363,18 +363,6 @@ function formatMetric(data, timestamp) {
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-}
-
-function formatCell(value) {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "number") {
-    if (value > 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(2)}T`;
-    if (value > 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
-    if (value > 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
-    if (value > 1_000) return `${(value / 1_000).toFixed(2)}K`;
-    return value.toString();
-  }
-  return String(value);
 }
 
 function getByPath(data, path) {

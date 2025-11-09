@@ -10,7 +10,7 @@ class Settings(BaseSettings):
         60, description="Default refresh interval for metric polling on the frontend."
     )
     sample_interval_seconds: int = Field(
-        5, description="How frequently to snapshot metrics into the database."
+        60, description="How frequently to snapshot metrics into the database."
     )
     history_points_limit: int = Field(
         120, description="Number of historical samples to return for charting."
@@ -32,4 +32,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
