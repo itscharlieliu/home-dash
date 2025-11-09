@@ -88,7 +88,7 @@ class DiskMetric(MetricProvider):
             options={
                 "columns": ["device", "mountpoint", "percent", "used", "free", "total"]
             },
-            column_span=2,
+            column_span=3,
         ),
     )
 
@@ -175,6 +175,6 @@ class NetworkMetric(MetricProvider):
 DEFAULT_PROVIDERS = [
     CPUMetric(),
     MemoryMetric(),
-    DiskMetric(),
     NetworkMetric(),
+    DiskMetric(),
 ]
