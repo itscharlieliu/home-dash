@@ -1,6 +1,6 @@
 import platform
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import psutil
 
@@ -184,9 +184,162 @@ class NetworkMetric(MetricProvider):
         }
 
 
+def _aggregate_temperature(
+    readings: Dict[str, Any],
+    keywords: List[str],
+) -> Optional[Dict[str, Any]]:
+    matches: List[Dict[str, Any]] = []
+    for name, entries in readings.items():
+        name_lc = name.lower()
+        name_matches = any(keyword in name_lc for keyword in keywords)
+        for entry in entries:
+            label_lc = (entry.label or "").lower()
+            label_matches = any(keyword in label_lc for keyword in keywords)
+            if not (name_matches or label_matches):
+                continue
+            if entry.current is None:
+                continue
+            matches.append(
+                {
+                    "label": entry.label or name,
+                    "current": entry.current,
+                    "high": entry.high,
+                    "critical": entry.critical,
+                }
+            )
+    if not matches:
+        return None
+
+    current_values = [
+        sample["current"] for sample in matches if sample["current"] is not None
+    ]
+    high_values = [sample["high"] for sample in matches if sample["high"] is not None]
+    critical_values = [
+        sample["critical"] for sample in matches if sample["critical"] is not None
+    ]
+
+    return {
+        "current": (
+            sum(current_values) / len(current_values) if current_values else None
+        ),
+        "high": max(high_values) if high_values else None,
+        "critical": max(critical_values) if critical_values else None,
+        "sensors": matches,
+    }
+
+
+class TemperatureMetric(MetricProvider):
+    definition = MetricDefinition(
+        id="temperature",
+        name="CPU & GPU Temperature",
+        description="Average temperature readings for CPU and GPU sensors.",
+        category="system",
+        display=MetricDisplayConfig(
+            type="timeseries",
+            series={
+                "CPU °C": "cpu.current",
+                "GPU °C": "gpu.current",
+            },
+            unit="celsius",
+        ),
+    )
+
+    CPU_KEYWORDS = ["cpu", "core", "package", "soc"]
+    GPU_KEYWORDS = ["gpu", "graphics", "nvidia", "amdgpu", "radeon"]
+
+    def collect(self) -> Dict[str, Any]:
+        try:
+            temps = psutil.sensors_temperatures()
+        except (AttributeError, NotImplementedError):
+            print("no temps")
+            temps = {}
+
+        print("temps", temps)
+
+        cpu_summary = (
+            _aggregate_temperature(temps, self.CPU_KEYWORDS) if temps else None
+        )
+        gpu_summary = (
+            _aggregate_temperature(temps, self.GPU_KEYWORDS) if temps else None
+        )
+
+        return {
+            "timestamp": time.time(),
+            "cpu": cpu_summary,
+            "gpu": gpu_summary,
+            "sensors_available": bool(temps),
+        }
+
+
+class DiskIOMetric(MetricProvider):
+    definition = MetricDefinition(
+        id="disk_io",
+        name="Disk Read/Write",
+        description="Disk I/O throughput measured in bytes per second.",
+        category="system",
+        display=MetricDisplayConfig(
+            type="timeseries",
+            series={
+                "Read B/s": "rates.read_bytes_per_sec",
+                "Write B/s": "rates.write_bytes_per_sec",
+            },
+            unit="bytes_per_second",
+        ),
+    )
+
+    def __init__(self) -> None:
+        self._last_counters: Optional[Any] = None
+        self._last_timestamp: Optional[float] = None
+
+    def collect(self) -> Dict[str, Any]:
+        timestamp = time.time()
+        counters = psutil.disk_io_counters(perdisk=False)
+        if counters is None:
+            return {
+                "timestamp": timestamp,
+                "rates": {
+                    "read_bytes_per_sec": None,
+                    "write_bytes_per_sec": None,
+                },
+                "totals": None,
+            }
+
+        read_rate: Optional[float] = None
+        write_rate: Optional[float] = None
+
+        if self._last_counters is not None and self._last_timestamp is not None:
+            elapsed = timestamp - self._last_timestamp
+            if elapsed > 0:
+                read_delta = counters.read_bytes - self._last_counters.read_bytes
+                write_delta = counters.write_bytes - self._last_counters.write_bytes
+                read_rate = read_delta / elapsed
+                write_rate = write_delta / elapsed
+
+        self._last_counters = counters
+        self._last_timestamp = timestamp
+
+        return {
+            "timestamp": timestamp,
+            "rates": {
+                "read_bytes_per_sec": read_rate,
+                "write_bytes_per_sec": write_rate,
+            },
+            "totals": {
+                "read_bytes": counters.read_bytes,
+                "write_bytes": counters.write_bytes,
+                "read_count": counters.read_count,
+                "write_count": counters.write_count,
+                "read_time": getattr(counters, "read_time", None),
+                "write_time": getattr(counters, "write_time", None),
+            },
+        }
+
+
 DEFAULT_PROVIDERS = [
     CPUMetric(),
     MemoryMetric(),
     NetworkMetric(),
     DiskMetric(),
+    TemperatureMetric(),
+    DiskIOMetric(),
 ]
